@@ -13,4 +13,5 @@ Graphics achieved with [SFML](https://github.com/SFML/SFML) and [ImGui](https://
 ## Todo list
 * 3D sound implementation
 * Better graphics
+* Visualize Fourier Transform
 
