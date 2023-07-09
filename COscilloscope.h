@@ -7,16 +7,12 @@
 
 #include "imgui.h"
 #include "imgui-SFML.h"
+#include <cfloat>
 
 #include <chrono>
-#include <Windows.h>
+#include <thread>
 #include <math.h>
-
-#pragma comment(lib, "sfml-system.lib")
-#pragma comment(lib, "sfml-audio.lib")
-#pragma comment(lib, "sfml-graphics.lib")
-#pragma comment(lib, "sfml-window.lib")
-#pragma comment(lib, "opengl32.lib")
+#include <cstdint>
 
 #define BUFFER_SIZE 3600
 #define ANG_DEG_FROM_RAD   M_PI / 180.0
@@ -58,9 +54,9 @@ public:
 		soundBuffers.push_back(signal);
 		signalsToDraw.push_back(sf::VertexArray(sf::Lines));
 
-		BYTE r = rand() % 255;
-		BYTE g = rand() % 255;
-		BYTE b = rand() % 255;
+		uint8_t r = rand() % 255;
+		uint8_t g = rand() % 255;
+		uint8_t b = rand() % 255;
 
 		if (r < 100)
 			r = 100;
@@ -75,7 +71,7 @@ public:
 		signalsColor.push_back(color);
 		signalsEnable.push_back(new bool(true));
 
-		needDrawing = TRUE;
+		needDrawing = true;
 	}
 
 	void CreateSquareSignal()
@@ -220,8 +216,5 @@ private:
 
 	std::chrono::high_resolution_clock::time_point start;
 	std::chrono::high_resolution_clock::time_point end;
-
-	HANDLE  threadActions;
-	DWORD   threadActID;
 };
 

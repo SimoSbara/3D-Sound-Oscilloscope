@@ -1,6 +1,6 @@
 #include "COscilloscope.h"
 
-DWORD WINAPI actionThread(LPVOID lpParam);
+void actionThread(void* lpParam);
 
 COscilloscope::COscilloscope(int width, int height)
 {
@@ -11,7 +11,7 @@ COscilloscope::COscilloscope(int width, int height)
 
 	this->fps = 0;
 
-	needDrawing = FALSE;
+	needDrawing = false;
 }
 
 COscilloscope::~COscilloscope()
@@ -19,7 +19,7 @@ COscilloscope::~COscilloscope()
 	ClearAllSignals();
 }
 
-DWORD WINAPI actionThread(LPVOID lpParam)
+void actionThread(void* lpParam)
 {
 	COscilloscope* instance = (COscilloscope*)lpParam;
 
@@ -78,25 +78,19 @@ DWORD WINAPI actionThread(LPVOID lpParam)
 					instance->signalsToDraw[j].append(v2);
 				}
 			}
-			instance->needDrawing = FALSE;
+			instance->needDrawing = false;
 		}
 	}
 
-	return 0;
+	return;
 }
 
 void COscilloscope::Run()
 {
-	isRunning = TRUE;
+	isRunning = true;
 
-	threadActions = CreateThread(
-		NULL,                   // default security attributes
-		0,                      // use default stack size  
-		actionThread,       // thread function name
-		this,          // argument to thread function 
-		0,                      // use default creation flags 
-		&threadActID);   // returns the thread identifier 
-
+	std::thread threadActions(actionThread, this);
+	threadActions.detach(); //indipendent execution
 	ImGui::SFML::Init(*window);
 
 	bool single = false;
@@ -114,7 +108,7 @@ void COscilloscope::Run()
 
 		ImGui::SFML::Update(*window, deltaClock.restart());
 
-		sprintf_s(titleWindow, "fps: %f", fps);
+		sprintf(titleWindow, "fps: %f", fps);
 
 		sf::String title(titleWindow);
 
@@ -160,7 +154,7 @@ void COscilloscope::Run()
 			ImGui::Checkbox(name.c_str(), signalsEnable[i]);
 		}
 		ImGui::End();
-
+				
 		if (!needDrawing)
 		{
 			window->clear(sf::Color::Black);
@@ -181,5 +175,6 @@ void COscilloscope::Run()
 		fps = (float)1e9 / (float)std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 	}
 
+	threadActions.~thread();
 	ImGui::SFML::Shutdown();
 }
