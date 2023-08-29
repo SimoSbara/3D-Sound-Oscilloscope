@@ -1,5 +1,9 @@
 #include "COscilloscope.h"
 
+#include <xstring>
+
+#define _CRT_SECURE_NO_WARNINGS
+
 DWORD WINAPI actionThread(LPVOID lpParam);
 
 COscilloscope::COscilloscope(int width, int height)
@@ -100,6 +104,36 @@ void COscilloscope::Run()
 	ImGui::SFML::Init(*window);
 
 	bool single = false;
+
+
+	ImGuiIO io = ImGui::GetIO();
+
+	// clipboard callbacks
+	io.SetClipboardTextFn = NULL; 
+	//[](void* user_data, const char* text) {
+	//	const char* text_end = text + strlen(text);
+	//	char* buf = (char*)malloc(text_end - text + 1);
+	//	memcpy(buf, text, text_end - text);
+	//	buf[text_end - text] = '\0';
+	//	//Clipboard::setString(buf);
+	//	free(buf);
+	//};
+	io.GetClipboardTextFn = NULL; 
+	//[](void* user_data) {
+	//	//std::string str = Clipboard::getString();
+
+	//	static std::vector<char> strCopy;
+	//	//strCopy = std::vector<char>(str.begin(), str.end());
+	//	//strCopy.push_back('\0');
+	//	return (const char*)&strCopy[0];
+	//};
+
+	char expression[2048];
+
+	memset(expression, 0, sizeof(expression));
+
+	sf::String string;
+
 	sf::Clock deltaClock;
 	while (window->isOpen())
 	{
@@ -110,6 +144,30 @@ void COscilloscope::Run()
 			// "close requested" event: we close the window
 			if (event.type == sf::Event::Closed)
 				window->close();
+			if(event.type == sf::Event::KeyPressed)
+			{
+
+				//// Using Ctrl + C to copy a string out of SFML
+				//if (event.key.control && event.key.code == sf::Keyboard::C)
+				//{
+				//	wchar_t strData[512];
+
+				//	if (OpenClipboard(0)) {
+				//		EmptyClipboard();
+				//		int size_m = sizeof(WCHAR) * (wcslen(strData) + 1);
+				//		HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE, size_m);
+				//		WCHAR* pchData;
+				//		pchData = (WCHAR*)GlobalLock(hClipboardData);
+				//		//wcscpy(pchData, strData);
+				//		wcscpy_s(pchData, size_m / sizeof(wchar_t), strData);
+				//		GlobalUnlock(hClipboardData);
+				//		SetClipboardData(CF_UNICODETEXT, hClipboardData);
+				//		CloseClipboard();
+				//		// if you need to call this function multiple times, I test no need to GlobalFree, or will occur error
+				//		//GlobalFree(hClipboardData);
+				//	}
+				//}
+			}
 		}
 
 		ImGui::SFML::Update(*window, deltaClock.restart());
@@ -123,6 +181,13 @@ void COscilloscope::Run()
 		window->setTitle(title);
 
 		ImGui::Begin("signal parameters");
+
+		ImGui::InputText("Expression", expression, sizeof(expression));
+
+		if (ImGui::Button("Add Custom Signal"))
+		{
+			CreateCustomSignal(expression);
+		}
 		if (ImGui::Button("Add Sin(x)"))
 		{
 			CreateSine();

@@ -47,6 +47,10 @@ Index of this file:
 #include <stdint.h>     // intptr_t
 #endif
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#endif
+
 //-------------------------------------------------------------------------
 // Warnings
 //-------------------------------------------------------------------------
@@ -4451,6 +4455,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         }
         else if (is_cut || is_copy)
         {
+            /*
             // Cut, Copy
             if (io.SetClipboardTextFn)
             {
@@ -4469,10 +4474,41 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
                 state->CursorFollow = true;
                 stb_textedit_cut(state, &state->Stb);
             }
+
+            */
         }
         else if (is_paste)
         {
-            if (const char* clipboard = GetClipboardText())
+            char* pszText = NULL;
+            if (OpenClipboard(0)) {
+                // Get handle of clipboard object for ANSI text
+                HANDLE hData = GetClipboardData(CF_TEXT);
+                if (hData == nullptr)
+                {
+                }
+                // Lock the handle to get the actual text pointer
+                pszText = static_cast<char*>(GlobalLock(hData));
+                if (pszText != nullptr)
+                {
+                   // memcpy_s(expression, sizeof(expression), pszText, strlen(pszText));
+
+                   // expression[strlen(pszText)] = 0;
+
+                    // Save text in a string class instance
+                    //std::string text(pszText);
+
+                }
+                // Release the lock
+                GlobalUnlock(hData);
+
+                // Release the clipboard
+                CloseClipboard();
+            }
+
+
+
+            const char* clipboard = pszText;
+            //if (const char* clipboard = GetClipboardText())
             {
                 // Filter pasted buffer
                 const int clipboard_len = (int)strlen(clipboard);
@@ -4494,6 +4530,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
                 }
                 MemFree(clipboard_filtered);
             }
+            
         }
 
         // Update render selection flag after events have been handled, so selection highlight can be displayed during the same frame.
@@ -4633,6 +4670,10 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             // Will copy result string if modified
             if (!is_readonly && strcmp(state->TextA.Data, buf) != 0)
             {
+                //memcpy_s(state->TextA.Data, state->TextA.Size, buf, buf_size);
+
+                //state->CurLenA = strlen(buf);
+
                 apply_new_text = state->TextA.Data;
                 apply_new_text_length = state->CurLenA;
             }

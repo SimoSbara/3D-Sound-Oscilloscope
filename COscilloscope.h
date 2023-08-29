@@ -1,5 +1,6 @@
 #pragma once
 #define _USE_MATH_DEFINES
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -12,11 +13,14 @@
 #include <Windows.h>
 #include <math.h>
 
+#include "muParser.h"
+
 #pragma comment(lib, "sfml-system.lib")
 #pragma comment(lib, "sfml-audio.lib")
 #pragma comment(lib, "sfml-graphics.lib")
 #pragma comment(lib, "sfml-window.lib")
 #pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "muparser.lib")
 
 #define BUFFER_SIZE 3600
 #define ANG_DEG_FROM_RAD   M_PI / 180.0
@@ -76,6 +80,60 @@ public:
 		signalsEnable.push_back(new bool(true));
 
 		needDrawing = TRUE;
+	}
+
+	const wchar_t* GetWC(const char* c)
+	{
+		const size_t cSize = strlen(c) + 1;
+		size_t converted;
+		wchar_t* wc = new wchar_t[cSize];
+		mbstowcs_s(&converted, wc, cSize, c, strlen(c));
+
+		return wc;
+	}
+
+	void CreateCustomSignal(std::string expression)
+	{
+		double* customSignal = new double[BUFFER_SIZE];
+
+		memset(customSignal, 0, BUFFER_SIZE * sizeof(double));
+
+		double theta = 0;
+
+		double var_k = 1, var_x = 0;
+		mu::Parser p;
+		p.DefineVar("k", &var_k);
+		p.DefineVar("x", &var_x);
+		//p.DefineFun("MySqr", MySqr);
+
+		//wchar_t* expr = (wchar_t*)GetWC(expression.c_str());
+
+		p.SetExpr(expression);
+
+		try
+		{
+			for (std::size_t k = 1; k < 100; ++k)
+			{
+				var_k = k;
+
+				for (int i = 0; i < BUFFER_SIZE; i++, theta += DECIM_ANG)
+				{
+
+						var_x = theta;
+						customSignal[i] += p.Eval();
+
+				}
+			}
+		}
+		catch (mu::Parser::exception_type& e)
+		{
+			std::cout << e.GetMsg() << std::endl;
+			delete customSignal;
+
+			return;
+		}
+
+		CreateSignal(customSignal);
 	}
 
 	void CreateSquareSignal()
